@@ -84,83 +84,6 @@ class StaticFeatureEncoder(nn.Module):
         return features
 
 
-# class StaticFeatureEncoder(nn.Module):
-#     def __init__(self, hidden_dim, dropout=0.2):
-#         super(StaticFeatureEncoder, self).__init__()
-#         # BatchNorm1d를 LayerNorm으로 변경
-#         self.norm = nn.LayerNorm(hidden_dim * 4)
-        
-#         self.feature_fusion = nn.Sequential(
-#             nn.Linear(hidden_dim * 4, hidden_dim * 2, bias=False),
-#             nn.LayerNorm(hidden_dim * 2),
-#             nn.GELU(),
-#             nn.Dropout(dropout),
-#             nn.Linear(hidden_dim * 2, hidden_dim),
-#             nn.LayerNorm(hidden_dim)
-#         )
-
-#         self.meta_linear = nn.Linear(51, hidden_dim)
-#         self.image_ln = nn.LayerNorm(512)
-#         self.text_ln = nn.LayerNorm(512)
-#         self.temp_ln = nn.LayerNorm(512)
-#         self.meta_ln = nn.LayerNorm(512)
-#         self.feature_ln = nn.LayerNorm(512)
-#         self.activation = nn.GELU()
-#         self.dropout = nn.Dropout(0.2)
-
-#     def forward(self, img_encoding, text_encoding, temporal_encoding=None, meta_data=None):
-#         image_embedding = self.dropout(self.image_ln(img_encoding))
-#         text_embedding = self.dropout(self.text_ln(text_encoding))
-#         temporal_embedding = self.dropout(self.temp_ln(temporal_encoding))
-#         meta_embedding = self.dropout(self.meta_ln(self.meta_linear(meta_data)))
-        
-#         features = self.activation(torch.cat([image_embedding, text_embedding, temporal_embedding, meta_embedding], dim=1))
-#         features = self.norm(features)  # BatchNorm1d를 LayerNorm으로 변경한 부분
-#         features = self.feature_fusion(features)
-#         features = self.feature_ln(self.activation(features))
-        
-#         return features
-
-
-
-# class StaticFeatureEncoder(nn.Module):
-#     def __init__(self, hidden_dim, dropout=0.2):
-#         super(StaticFeatureEncoder, self).__init__()
-
-#         self.batchnorm = nn.BatchNorm1d(hidden_dim * 4)
-
-#         self.feature_fusion = nn.Sequential(
-#             nn.Linear(hidden_dim * 4, hidden_dim * 2, bias=False),
-#             nn.LayerNorm(hidden_dim * 2),
-#             nn.GELU(),
-#             nn.Dropout(dropout),
-#             nn.Linear(hidden_dim * 2, hidden_dim),
-#             nn.LayerNorm(hidden_dim)
-#         )
-
-#         self.meta_linear = nn.Linear(51, hidden_dim)
-
-#         self.image_ln = nn.LayerNorm(512)
-#         self.text_ln = nn.LayerNorm(512)
-#         self.temp_ln = nn.LayerNorm(512)
-#         self.meta_ln = nn.LayerNorm(512)
-#         self.feature_ln = nn.LayerNorm(512)
-#         self.activation = nn.GELU()
-#         self.dropout = nn.Dropout(0.2)
-
-#     def forward(self, img_encoding, text_encoding, temporal_encoding=None, meta_data=None):
-#         image_embedding = self.dropout(self.image_ln(img_encoding))
-#         text_embedding = self.dropout(self.text_ln(text_encoding))
-#         temporal_embedding = self.dropout(self.temp_ln(temporal_encoding))
-#         meta_embedding = self.dropout(self.meta_ln(self.meta_linear(meta_data)))
-
-#         features = self.activation(torch.cat([image_embedding, text_embedding, temporal_embedding, meta_embedding], dim=1))
-#         features = self.batchnorm(features)
-#         features = self.feature_fusion(features)
-#         features = self.feature_ln(self.activation(features))
-
-#         return features
-
 
 
 
@@ -503,116 +426,7 @@ class GTM(pl.LightningModule):
         return forecast
     
     
-    # def forward(self, item_sales, temporal_features, ntrends, images, texts, meta_data, k_item_sales, pop_signal):
-    #     # 기존 전처리 부분
-    #     ntrends = ntrends.squeeze(1)
-    #     temporal_encoding = self.dummy_encoder(temporal_features)
-        
-    #     # encoder 부분
-    #     img_encoding = images
-    #     text_encoding = texts
-    #     static_feature_fusion = self.static_feature_encoder(img_encoding, text_encoding, 
-    #                                                     temporal_encoding=temporal_encoding[:, 52],
-    #                                                     meta_data=meta_data)
-
-    #     # 시퀀스 길이 계산
-    #     batch_size = ntrends.size(0)
-    #     gtrend_len = self.trend_len  # 12
-    #     pop_len = self.trend_len     # 12
-    #     k_item_len = self.n_neighbors * 12  # n_neighbors * 12
-    #     total_seq_len = gtrend_len + pop_len + k_item_len
-        
-    #     # 기본 마스크 생성
-    #     device = f'cuda:{self.gpu_num}'
-    #     mask_0 = torch.zeros(gtrend_len, gtrend_len).to(device)
-    #     mask_1 = torch.zeros(gtrend_len, k_item_len).to(device)
-        
-    #     # 각 컴포넌트별 마스크 생성
-    #     ntrends_mask = torch.cat([
-    #         self._generate_deocder_fisrt_mask(),  # 트렌드 자기 주의력 마스크
-    #         mask_0,                               # 트렌드-팝 크로스 어텐션 마스크
-    #         mask_1                                # 트렌드-아이템 크로스 어텐션 마스크
-    #     ], axis=1)
-        
-    #     pop_mask = torch.cat([
-    #         mask_0,                               # 팝-트렌드 크로스 어텐션 마스크
-    #         self._generate_deocder_fisrt_mask(),  # 팝 자기 주의력 마스크
-    #         mask_1                                # 팝-아이템 크로스 어텐션 마스크
-    #     ], axis=1)
-        
-    #     k_item_mask = torch.cat([
-    #         mask_1.transpose(1, 0),               # 아이템-트렌드 크로스 어텐션 마스크
-    #         mask_1.transpose(1, 0),               # 아이템-팝 크로스 어텐션 마스크
-    #         self._generate_k_item_sales_mask()    # 아이템 자기 주의력 마스크
-    #     ], axis=1)
-        
-    #     # 최종 마스크 생성
-    #     combined_mask = torch.cat([ntrends_mask, pop_mask, k_item_mask], axis=0)
-        
-    #     # 디버깅을 위한 shape 출력
-    #     # print(f"Mask shapes - ntrends: {ntrends_mask.shape}, pop: {pop_mask.shape}, k_item: {k_item_mask.shape}")
-    #     # print(f"Combined mask shape: {combined_mask.shape}")
-        
-    #     # Encoder 실행
-    #     k_item_sales_emb = self.k_item_sales_encoder(
-    #         ntrends.permute(0, 2, 1),  # (batch_size, hidden_dim, trend_len)
-    #         k_item_sales,              # (batch_size, n_neighbors * 12, hidden_dim)
-    #         combined_mask,             # (total_seq_len, total_seq_len)
-    #         pop_signal=pop_signal
-    #     )
-        
-    #     # Decoder 실행
-    #     memory_of_decoder_se = self.decoder_first(
-    #         tgt=static_feature_fusion.unsqueeze(0),
-    #         memory=k_item_sales_emb
-    #     )
-        
-    #     # 최종 예측
-    #     forecast = self.given_0_nonauto_linear(memory_of_decoder_se).reshape(-1, self.output_len, 512)
-        
-    #     return forecast
-
-    # def forward(self, item_sales, temporal_features, ntrends, images, texts, meta_data, k_item_sales, pop_signal):
-        
-    #     # 차원 확인용 print문 추가
-    #     ntrends = ntrends.squeeze(1)  # (4, 1, 12, 512) -> (4, 12, 512)
-    #     print("ntrends shape before processing::", ntrends.shape) # (batch_size, trend_len=12, hidden_dim=D)
-    #     print("k_item_sales shape:", k_item_sales.shape)
-        
-    #     temporal_encoding = self.dummy_encoder(temporal_features)
-
-    #     """encoder"""
-    #     img_encoding = images
-    #     text_encoding = texts
-
-    #     static_feature_fusion = self.static_feature_encoder(img_encoding, text_encoding, temporal_encoding=temporal_encoding[:, 52],
-    #                                                         meta_data=meta_data)
-
-    #     mask_0 = torch.full((self.trend_len, self.trend_len), float(0.0)).to(f'cuda:{self.gpu_num}')
-    #     mask_1 = torch.full((self.trend_len, self.n_neighbors * 12), float(0.0)).to(f'cuda:{self.gpu_num}')
-    #     ntrends_mask = torch.cat([self._generate_deocder_fisrt_mask(), mask_0, mask_1], axis=1)
-    #     # ntrends_mask = torch.cat([self._generate_deocder_fisrt_mask(), mask_1], axis=1)
-    #     pop_mask = torch.cat([mask_0, self._generate_deocder_fisrt_mask(), mask_1], axis=1)
-    #     k_item_mask = torch.cat([mask_1.transpose(1, 0), mask_1.transpose(1, 0), self._generate_k_item_sales_mask()], axis=1)
-    #     # k_item_mask = torch.cat([mask_1.transpose(1, 0), self._generate_k_item_sales_mask()], axis=1)
-
-
-    #     # nn.Module이 __call__ 메소드를 통해 forward 메소드를 자동으로 호출하도록 구현되어 있기 때문에
-    #     # self.k_item_sales_encoder 인스턴스를 함수처럼 호출하면 내부적으로 forward 메소드가 실행됨
-    #     # ntrends permute 전에 차원 확인
-    #     ntrends_permuted = ntrends.permute(0, 2, 1) ## (batch_size, D, trend_len=12)
-    #     print("ntrends_permuted shape:", ntrends_permuted.shape)
-    #     k_item_sales_emb = self.k_item_sales_encoder(ntrends.permute(0, 2, 1), k_item_sales, torch.cat([ntrends_mask, pop_mask, k_item_mask], axis=0),
-    #                                                  pop_signal=pop_signal)
-    #     # k_item_sales_emb = self.k_item_sales_encoder(ntrends.permute(0, 2, 1), k_item_sales, torch.cat([ntrends_mask, k_item_mask], axis=0))
-
-    #     memory_of_decoder_se = self.decoder_first(tgt=static_feature_fusion.unsqueeze(0), memory=k_item_sales_emb)
-    #     forecast = self.given_0_nonauto_linear(memory_of_decoder_se).reshape(-1, self.output_len, 512)
-
-        
-
-    #     return forecast
-
+    
     def configure_optimizers(self):
         import torch_optimizer as optim
         from torch_optimizer import QHAdam, LARS
@@ -622,16 +436,16 @@ class GTM(pl.LightningModule):
         from lion_pytorch import Lion
         from adabelief_pytorch import AdaBelief
         
-        optimizer = torch.optim.Adam(self.parameters(), lr=self.lr) #팀장님 원본
+        #optimizer = torch.optim.Adam(self.parameters(), lr=self.lr) #팀장님 원본
 
-#         optimizer = AdaBelief(             # 팀장님 것보다 더 성능 좋아진 옵티마이저
-#     self.parameters(), 
-#     lr=0.0001, # 기존 학습률 유지
-#     eps=1e-16, # 분모가 0이 되는 것을 방지
-#     betas=(0.9, 0.999), # Adam과 동일한 설정
-#     weight_decay=1e-5, # 가중치 감소 적용
-#     rectify=False # 필요에 따라 True로 설정
-# )
+        optimizer = AdaBelief(             # 팀장님 것보다 더 성능 좋아진 옵티마이저
+            self.parameters(), 
+            lr=0.0001, # 기존 학습률 유지
+            eps=1e-16, # 분모가 0이 되는 것을 방지
+            betas=(0.9, 0.999), # Adam과 동일한 설정
+            weight_decay=1e-5, # 가중치 감소 적용
+            rectify=False # 필요에 따라 True로 설정
+            )
 
 
         # 학습률 스케줄러
@@ -911,4 +725,4 @@ class GTM(pl.LightningModule):
         r2_score_gs_stack = torch.stack([r2score(pred[i], gt.detach().cpu()[i]) for i in range(len(gt))])
 
         return smape_adjust_gs_stack
-        # return r2_score_gs_stack
+        

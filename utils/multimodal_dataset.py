@@ -289,22 +289,7 @@ class ZeroShotDataset():
         
         return idx_data
 
-        # k_nearest_idx = self.distance_sorted_mat[idx][:self.n_neighbors]
-        # k_item_sales_list = []
-        # for k_item in k_nearest_idx:
-        #     # row = self.train_sales_df.loc[k_item]
-        #     row = self.memory_sales_df.iloc[k_item]
-        #     row = row.iloc[1:].values
-        #     k_item_sales_list.append(self.sales_transform.transform(torch.tensor(np.array(row, dtype='int'), dtype=torch.int64)))
-        #     # k_item_sales_list.append(torch.FloatTensor(StandardScaler().fit_transform(np.array(row, dtype='int').reshape(-1, 1))).reshape(12))
-        # k_item_sales = torch.stack(k_item_sales_list).reshape(-1, 512)
-        # idx_data = list(idx_data)
-
-        # idx_data[-2] = k_item_sales
-
-
-        # idx_data = tuple(idx_data)
-        # return idx_data
+        
 
     def get_loader_shuffle(self):
         # data_with_gtrends = self.preprocess_data()
@@ -320,21 +305,7 @@ class ZeroShotDataset():
 
         return data_with_gtrends
 
-    # def get_loader(self, batch_size, shuffle, num_workers):
-    #     # data_with_gtrends = self.preprocess_data()
-    #
-    #     print("Loading dataset...")
-    #     if os.path.isfile(self.local_savepath):
-    #         data_with_gtrends = torch.load(self.local_savepath)  # load dataset directly from saved files
-    #     else:
-    #         print('Starting dataset creation process...')
-    #         data_with_gtrends = self.preprocess_data()
-    #         torch.save(data_with_gtrends, self.local_savepath)
-    #     print("loading dataset...Done.")
-    #
-    #     data_loader = DataLoader(data_with_gtrends, batch_size=batch_size, shuffle=shuffle, num_workers=num_workers)
-    #
-    #     return data_loader
+    
 
     def __len__(self):
         return len(self.sales_df)

@@ -16,7 +16,7 @@ os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
 os.environ['CURL_CA_BUNDLE'] = ''
 
-wandb.login(key='65f58319d77e59bf2f13edce1380a3a6390dbfee', relogin=True, force=True) #이지환의 wandb api 키
+wandb.login(key='put your key', relogin=True, force=True) # wandb api 키 입력
 wandb.init(
     project="SFLab_jihwan",  # 사용할 프로젝트명
     entity="ywl9845-yonsei-university",  # 팀 이름 (조직 이름)
@@ -50,7 +50,7 @@ def run(args):
                                     local_savepath=args.train_pt,
                                     pop_root=None  # Pop Signal 데이터 제거
                                 )
-    # train_loader = train_dataset.get_loader(batch_size=args.batch_size, shuffle=True, num_workers=4)
+    
     train_loader = DataLoader(train_dataset, batch_size=args.batch_size, shuffle=True, num_workers=4)
 
     val_dataset = ZeroShotDataset(
@@ -68,7 +68,7 @@ def run(args):
                             local_savepath=args.val_pt,
                             pop_root=None  # Pop Signal 데이터 제거
                         )
-    # val_loader = val_dataset.get_loader(batch_size=args.batch_size, shuffle=False, num_workers=4)
+    
     val_loader = DataLoader(val_dataset, batch_size=args.batch_size, shuffle=False, num_workers=4)
 
     test_dataset = ZeroShotDataset(
@@ -86,7 +86,7 @@ def run(args):
                                 local_savepath=args.test_pt,
                                 pop_root=None  # Pop Signal 데이터 제거
                             )
-    # test_loader = test_dataset.get_loader(batch_size=args.batch_size, shuffle=False, num_workers=4)
+    
     test_loader = DataLoader(test_dataset, batch_size=args.batch_size, shuffle=False, num_workers=4)
 
     model = GTM(
@@ -116,17 +116,12 @@ def run(args):
 
     wandb_logger = WandbLogger(name=model_savename)
 
-    # #기존 팀장님 코드에서 Earlystopping 방법 추가함
-    # early_stop_callback = pl.callbacks.EarlyStopping(
-    # monitor='val_week_given0_ad_smape_gs',
-    # patience=5,
-    # mode='min'
-    # )
+
 
     trainer = pl.Trainer(
         gpus=[args.gpu_num],
         max_epochs=args.epochs, check_val_every_n_epoch=1,
-        logger=wandb_logger, callbacks=[checkpoint_callback], # , early_stop_callback 기존 팀장님 코드에서 Earlystopping 방법 추가함
+        logger=wandb_logger, callbacks=[checkpoint_callback], 
     )
 
     trainer.fit(model, train_dataloaders=train_loader, val_dataloaders=val_loader)
@@ -179,35 +174,15 @@ if __name__ == '__main__':
 
     args.sales_df_root = "total_r_s.csv"
     args.n_trends_root = "all_included(brand&category)3.pkl" # 수정 - 아이템별로 각 주차별로 자신이 해당하는 메타데이터조합의 평균 median값 넣기.
-    # args.cat_trend_root = "total_cat_trend_240916.pkl" #네이버 트렌드 관련
-    # args.fab_trend_root = "total_fab_trend_240916.pkl" #네이버 트렌드 관련
-    # args.col_trend_root = "total_col_trend_240916.pkl" #네이버 트렌드 관련
     args.meta_df_root = "total_meta_data_240916.csv"
     args.imb_emb_root = "total_img_emb_240916.pkl"
     args.text_emb_root = "total_text_emb_240916.pkl"
 
-    # args.train_distance_sorted = 'erp_realvalue_train_distance_sorted.npy'
-    # args.val_distance_sorted = 'erp_realvalue_val_distance_sorted.npy'
-    # args.test_distance_sorted = 'erp_realvalue_test_distance_sorted.npy'
     
-    ######## ERP distance 데이터 ########## - 기존대로 인코더에 데이터 입력하고 싶으면 아래 세 라인의 주석을 제거하시오
-    # args.train_distance_sorted = 'erp_pred_dist_argsort/241213-0844_erp_neighbor_cl_maxplus1_groupsize2048_norm2_10epoch_brand_10neighbors_new_split/train_pred_dist_argsort.npy'
-    # args.val_distance_sorted = 'erp_pred_dist_argsort/241213-0844_erp_neighbor_cl_maxplus1_groupsize2048_norm2_10epoch_brand_10neighbors_new_split/val_pred_dist_argsort.npy'
-    # args.test_distance_sorted = 'erp_pred_dist_argsort/241213-0844_erp_neighbor_cl_maxplus1_groupsize2048_norm2_10epoch_brand_10neighbors_new_split/test_pred_dist_argsort.npy'
-##########
-    # args.train_pt = "/home/sflab/SFLAB/su_GTM_t/ANTM_MB/dataset_tensor/train_10neighbors_nt_erp_pop_new_split.pt"
-    # args.val_pt = "/home/sflab/SFLAB/su_GTM_t/ANTM_MB/dataset_tensor/val_10neighbors_nt_erp_pop_new_split_gt_erp.pt"
-    # args.test_pt = "/home/sflab/SFLAB/su_GTM_t/ANTM_MB/dataset_tensor/test_10neighbors_nt_erp_pop_new_split_gt_erp.pt"
-    # args.train_pt = "/home/sflab/SFLAB/su_GTM_t/ANTM_MB/dataset_tensor/train_10neighbors_nt_erp_pop_new_split.pt"
-    # args.val_pt = "/home/sflab/SFLAB/su_GTM_t/ANTM_MB/dataset_tensor/val_10neighbors_nt_erp_pop_new_split.pt"
-    # args.test_pt = "/home/sflab/SFLAB/su_GTM_t/ANTM_MB/dataset_tensor/test_10neighbors_nt_erp_pop_new_split.pt"
     args.train_pt = "/home/sflab/SFLAB/jihwan_folder/ANTM_MB/dataset_tensor/train_bc3300_250210.pt" #데이터셋 생성 후 캐싱(저장)되는 경로
     args.val_pt = "/home/sflab/SFLAB/jihwan_folder/ANTM_MB/dataset_tensor/val_bc3300_250210.pt"     #데이터셋 생성 후 캐싱(저장)되는 경로
     args.test_pt = "/home/sflab/SFLAB/jihwan_folder/ANTM_MB/dataset_tensor/test_bc3300_250210.pt"   #데이터셋 생성 후 캐싱(저장)되는 경로
 
-    ######## Pop Signal 데이터 ##########  - 기존대로 인코더에 데이터 입력하고 싶으면 아래 라인의 주석을 제거하시오
-    # args.pop_root = '/home/sflab/SFLAB/yoonjung/mindbridge/pop03/result'
-########
     args.model_type = "ANTM_fourier_realvalue_dtw_10neighbors_masking_brand_nt_erp_pop_continue_pop_crossrefer_new_split_dropout_gating_10epoch_median_OnlyTrendEncoder"
     args.epochs = 10 # 300  # 10
     args.batch_size = 128  # 4 / 128
